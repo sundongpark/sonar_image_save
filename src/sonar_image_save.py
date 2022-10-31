@@ -79,7 +79,7 @@ def get_mask(class_id):
     global j
     mask = np.zeros((480, 320), np.float32)
     for i in range(10):
-        img_msg = rospy.wait_for_message("/blueview_p900/sonar_image", Image)
+        img_msg = rospy.wait_for_message("/sim_sonar/sonar_image", Image)
         src = mask_callback(img_msg)
         mask += src
     mask /= 10
@@ -92,7 +92,7 @@ def main():
     rospy.init_node('sonar_image_save', anonymous=True)
     
     q = quaternion_from_euler(0, np.deg2rad(pitch), 0)
-    spawn_model('blueview_p900_nps_multibeam_ray', 0, 0, 30, q[0], q[1], q[2], q[3]) # pitch 15 degree
+    spawn_model('sim_sonar', 0, 0, 30, q[0], q[1], q[2], q[3]) # pitch 15 degree
 
     rospy.sleep(1.)  # delay
 
@@ -143,7 +143,7 @@ def main():
                 spawn_model(MODELS[CLASSES[models[k]]], xyz[k][0], xyz[k][1], xyz[k][2], xyz[k][3], xyz[k][4], xyz[k][5])
         rospy.sleep(1)  # delay
 
-        img_msg = rospy.wait_for_message("/blueview_p900/sonar_image", Image)
+        img_msg = rospy.wait_for_message("/sim_sonar/sonar_image", Image)
         image = image_callback(img_msg)
 
         cv2.imwrite(save_path + 'imgs/sonar_image_' + str(i) + '.png', image)

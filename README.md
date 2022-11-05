@@ -8,7 +8,11 @@
 실제로 수중에서 얻은 데이터를 이용해 Semantic segmentation 모델을 학습하고 Multibeam Sonar 시뮬레이터에서 얻은 데이터를 추가하여 모델을 학습하여 정확도를 비교한다. 시뮬레이터에서 데이터를 수집할 때 시뮬레이터 상에서의 물체의 위치와 상태를 바꾸어가면서 mask와 label(ground-truth)을 함께 얻도록 하여 별도의 annotation 작업이 필요 없도록 해 데이터 수집 비용을 줄일 수 있도록 한다. 이후 시뮬레이터에서 얻은 데이터와 실제 데이터를 이용해 Semantic segmentation의 정확도를 높일 방법을 찾는다.
 
 ## 2. 추진현황
-### 가. 시뮬레이터 Sonar 마스크 수집
+### [가. Semantic segmentation 모델 구현](https://github.com/sundongpark/sonar_segmentation)
+Semantic segmentation은 PyTorch를 이용해 구현한다. 선행연구(Singh, D., & Valdenegro-Toro, M. (2021).)에서 가장 성능이 좋았던 Unet+ResNet34 모델을 포함하여 Unet, Unet+ResNet(18, 34, 50, 101, 152), Unet+VGG(16, 19) 모델을 구축하였다. 이후 더 정확한 결과를 얻기 위해 구현한 모델에 가중치를 고정하여 학습을 진행해 mIoU 결과를 다시 얻었다.
+### 나. 시뮬레이터 Sonar 이미지 조정
+ARIS Explorer 3000 소나에서 수집된 데이터셋과 비슷한 이미지를 얻을 수 있도록 조정하였다. FOV와 주파수를 조정하여 ARIS Explorer 3000 소나와 비슷한 이미지를 얻을 수 있도록 조정하였다.
+### 다. 시뮬레이터 Sonar 마스크 수집
 Gazebo 시뮬레이터 상에서 바닥과 1~5개의 물체를 생성하여 소나 이미지를 얻는다. 이후 바닥을 제거하고 물체 하나씩만을 남겨 각각의 물체마다 투영된 이미지를 얻는다. 이때 노이즈를 제거하기 위해 물체마다 10장의 이미지를 수집한 뒤 평균을 구하고 일정 Threshold 이상의 값을 모두 Class의 ID로 칠하였다. 또 물체가 겹치는 부분과 그림자에 의해 가려지는 부분을 구분하기 위해 모든 물체가 있을 때 투영된 이미지와 비교하여 겹치는 부분만 남겨 마스크를 생성하였다. 이 과정을 반복하여 무한히 이미지와 마스크를 시뮬레이터에서 수집할 수 있다.
 <img src="img+gt.png">
 ## 3. 추진계획
@@ -17,4 +21,5 @@ Gazebo 시뮬레이터 상에서 바닥과 1~5개의 물체를 생성하여 소�
 
 ## Reference
 * [Forward-Looking Sonar Marine Debris Datasets](https://github.com/mvaldenegro/marine-debris-fls-datasets)
+* [Singh, Deepak, and Matias Valdenegro-Toro. "The marine debris dataset for forward-looking sonar semantic segmentation." Proceedings of the IEEE/CVF International Conference on Computer Vision. 2021.](https://openaccess.thecvf.com/content/ICCV2021W/OceanVision/html/Singh_The_Marine_Debris_Dataset_for_Forward-Looking_Sonar_Semantic_Segmentation_ICCVW_2021_paper.html)
 * [DAVE](https://github.com/Field-Robotics-Lab/dave)

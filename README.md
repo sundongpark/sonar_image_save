@@ -7,7 +7,7 @@
 ### 나. 과제 주요내용
 실제로 수중에서 얻은 데이터를 이용해 Semantic segmentation 모델을 학습하고 Multibeam 소나 시뮬레이터에서 얻은 데이터를 추가하여 모델을 학습하여 정확도를 비교한다. 시뮬레이터에서 데이터를 수집할 때 시뮬레이터 상에서의 물체의 위치와 상태를 바꾸어가면서 mask와 label(ground-truth)을 함께 얻도록 하여 별도의 annotation 작업이 필요 없도록 해 데이터 수집 비용을 줄일 수 있도록 한다. 이후 시뮬레이터에서 얻은 데이터와 실제 데이터를 이용해 Semantic segmentation의 정확도를 높일 방법을 찾는다.
 
-## 2. 추진현황
+## 2. 과제 수행방법
 ### [가. Semantic segmentation 모델 구현](https://github.com/sundongpark/sonar_segmentation)
 Semantic segmentation은 PyTorch를 이용해 구현한다. 선행연구(Singh, D., & Valdenegro-Toro, M. (2021).)에서 가장 성능이 좋았던 Unet+ResNet34 모델을 포함하여 Unet, Unet+ResNet(18, 34, 50, 101, 152), Unet+VGG(16, 19) 모델을 구축하였다. 이후 더 정확한 결과를 얻기 위해 구현한 모델에 가중치를 고정하여 학습을 진행해 mIoU 결과를 다시 얻었다.
 ### 나. 시뮬레이터 Sonar 이미지 조정

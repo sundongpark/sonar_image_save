@@ -30,7 +30,7 @@ ARIS Explorer 3000 소나와 비슷하게 Gazebo의 depth camera의 FOV를 조�
 
 ARIS Explorer 3000 소나와 비슷하게 FOV와 주파수를 조정한 후 Gazebo 시뮬레이터 상에서 바닥과 1~5개의 물체를 생성하여 소나 이미지를 얻고 바닥을 제거하고 물체 하나씩만을 남겨 각각의 물체마다 투영된 이미지를 얻는 과정을 반복하여 수집한 이미지와 마스크는 다음과 같다.
 
-<img src="img+gt.png">
+<img src="results/img+gt.png">
 
 시뮬레이터에서 얻은 Multibeam 소나 이미지를 기존 데이터셋(Marine Debris Datasets)에 0.2, 0.5, 1, 1.8배의 비율로 추가하여 성능을 평가하였다. 시뮬레이터에서 생성한 이미지를 학습에 사용했을 때 성능이 올라가는 경우가 존재했다.
 |Real:Sim|Unet|Unet+RN18|Unet+RN34|Unet+RN50|Unet+RN101|Unet+RN152|Unet+VGG16|Unet+VGG19|
@@ -40,15 +40,15 @@ ARIS Explorer 3000 소나와 비슷하게 FOV와 주파수를 조정한 후 Gaze
 |1:1|0.7429|0.7321|0.7358|0.7241|0.7389|0.7286|0.7381|0.7311| 
 |1:1.8|0.7453|0.7276|0.7459|0.7320|0.7415|0.7456|0.7300|0.7367|
 
-<img src="unet+RN18.png">
+<img src="results/unet+RN18.png">
 시뮬레이터에서 얻은 Multibeam 소나 이미지만으로 학습한 이후 기존 데이터셋만을 사용하여 학습할 때 pre-trained 없이 학습하거나 ImageNet pre-trained 모델을 사용할 때보다 학습 속도가 더 빠른 것을 확인하였다.
 
-<img src="unet+RN18_history.png">
-<img src="unet+RN34_history.png">
+<img src="results/unet+RN18_history.png">
+<img src="results/unet+RN34_history.png">
 
 ARIS Explorer 3000 소나와 비슷하게 depth camera의 FOV를 조정한 후 얻은 point cloud 정보를 이용해 좌표 변환으로 수집한 이미지는 다음과 같다.
 
-<img src="depth2sonar.png">
+<img src="results/depth2sonar.png">
 
 ### 나. 최종결과물 주요특징 및 설명
 시뮬레이터를 이용하여 별도의 annotation 없이 데이터를 무한히 얻을 수 있다. 시뮬레이터를 통해 얻은 데이터를 추가한 모델은 그렇지 않은 모델보다 mIoU 값이 올라가는 상황이 존재했다. 또한 시뮬레이터에서 얻은 이미지로 학습한 pre-trained 모델이 기존 데이터셋만을 사용하여 학습할 때 pre-trained 없이 학습하거나 ImageNet pre-trained 모델을 사용할 때보다 더 효과적이었다. Depth camera를 이용해 소나 이미지를 얻도록 하여 BlueView P900 소나를 기반으로 구현된 시뮬레이터보다 더 ARIS Explorer 3000 소나에 가깝게 구현되었다.

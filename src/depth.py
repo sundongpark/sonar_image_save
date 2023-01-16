@@ -75,14 +75,8 @@ def point_callback(msg, is_img=True):
             pc2_fat = pc_fat
         
         image = get_depth_map(K, pc2_fat, image)
-        image = cv2.GaussianBlur(image, (1,5), 3) # cv2.blur(image,(1,5))
-        if is_img:      # Add noise
-            for hh in range(480):
-                for ww in range(320):
-                    if image[hh][ww]:
-                        image[hh][ww] = np.clip(image[hh][ww] + np.random.normal(0,10), 0, 255)
         image = image * crop_mask
-        return image
+        return image.astype(np.uint8)
     except CvBridgeError:
           rospy.logerr("CvBridge Error: {0}".format(e))
 
@@ -107,9 +101,10 @@ def get_depth_map(intrinsic, pc, img_depth):
         uvw = np.matmul(intrinsic, pc)
         uvw[0, :] = uvw[0, :] / uvw[2, :]
         uvw[1, :] = uvw[1, :] / uvw[2, :]
-        # print(np.max(uvw[2, :])-np.min(uvw[2, :]))
-        # uvw[2, :] = 255 - (uvw[2, :] - np.min(uvw[2, :])) / (np.max(uvw[2, :]) - np.min(uvw[2, :])) * 200
-        uvw[2, :] = np.clip(200 - (uvw[2, :] - 2) / 1.4 * 200, 0, 150)
+
+        depth_min = 2.4
+        depth_max = 2.8
+        uvw[2, :] = np.clip(210 - (np.clip(uvw[2, :], depth_min, depth_max)-depth_min) / (depth_max-depth_min) * 150, 0, 255)    # object = 50~200, background = 0
 
         uvw_t = np.transpose(uvw).astype(int)
         h, w = img_depth.shape
@@ -118,7 +113,12 @@ def get_depth_map(intrinsic, pc, img_depth):
         for u in uvw_t:
             if img_depth[u[1], u[0]] < u[2]:
                 img_depth[u[1], u[0]] = u[2]
-        #img_depth[uvw_t[:, 1], uvw_t[:, 0]] = uvw_t[:, 2]
+
+        # Bilinear Interpolation
+        for hh in range(0,480):
+            for ww in range(0,320):
+                if img_depth[hh][ww] == 0 and hh > 0 and hh < 479 and ww > 0 and ww < 319:
+                    img_depth[hh][ww] = int((img_depth[hh-1][ww]+img_depth[hh+1][ww])/2)
     except:
         pass
     return img_depth
@@ -150,7 +150,7 @@ def delete_model(model_name):
 def get_mask(class_id):
     global j
     point_msg = rospy.wait_for_message("/camera/depth/points", PointCloud2)
-    mask = point_callback(point_msg)
+    mask = point_callback(point_msg, False)
     ret, mask = cv2.threshold(mask, th, class_id, cv2.THRESH_BINARY)
     return mask
 
@@ -162,6 +162,8 @@ def main():
     q = quaternion_from_euler(0, np.deg2rad(pitch), 0)
     spawn_model('depth_camera', 0, 0, 30, q[0], q[1], q[2], q[3]) # pitch 15 degree
     rospy.sleep(1.)  # delay
+
+
 
     i = 0
     j = 0
@@ -175,13 +177,11 @@ def main():
 
         rand_x = sorted(random.sample(range(1,max_sample+1), samples))
         for k in range(samples):
-            #z = (h-0.1)-(random.random()*0.01)  # z가 h보다 0.1 작다 h는 z보다 0.1 크다
-            #x = h/(((np.tan(np.deg2rad(pitch+5))-np.tan(np.deg2rad(pitch-7.5)))/h)*(rand_x[k]/max_sample)+np.tan(np.deg2rad(pitch-5))/h) + random.random()*0.1
+
             x = (random.random()/rand_x[k]*2+1+random.random()*0.1) # 1~2
             y = x*(np.sin(np.deg2rad(14))*(2*random.random()-1))   # -0.24~0.24
 
             if models[k] == 'wall':
-                #xyz.append([h/(np.tan(np.deg2rad(pitch-10))) + random.random()*0.1, 5*(random.random()-0.5), 30-h+2, 0, 0, 0, 0])
                 xyz.append([3.5+random.random()*0.1, 5*(random.random()-0.5), 30-h+2, 0, 0, 0, 0])
             elif models[k] == 'valve':
                 xyz.append([x, y, 30-h+0.24, 0, 0, 0, 0])
@@ -215,8 +215,8 @@ def main():
         image_message = bridge.cv2_to_imgmsg(image, "passthrough")
         image_pub.publish(image_message)
 
-        cv2.imwrite(save_path + 'imgs/pitch_'+str(pitch) +'_'+ str(i).zfill(4) + '.png', image)
-        print(save_path + 'imgs/pitch_'+str(pitch) +'_'+str(i).zfill(4) + '.png' + ' saved!')
+        cv2.imwrite(save_path + 'imgs/'+ str(i).zfill(4) + '.png', image)
+        print(save_path + 'imgs/'+str(i).zfill(4) + '.png' + ' saved!')
         i = i + 1
 
         delete_model('ocean')
@@ -252,18 +252,19 @@ def main():
                 print(models[k])
                 res[(res>0) & (masks[k]>0)] = 0
                 res = cv2.bitwise_or(masks[k], res)
-        cv2.imwrite(save_path + 'masks/pitch_'+str(pitch) +'_'+ str(j).zfill(4) + '.png', res)
-        print(save_path + 'masks/pitch_'+str(pitch) +'_'+ str(j).zfill(4) + '.png' + ' saved!')
+        cv2.imwrite(save_path + 'masks/'+ str(j).zfill(4) + '.png', res)
+        print(save_path + 'masks/'+str(j).zfill(4) + '.png' + ' saved!')
         j = j + 1
     '''
     spawn_model('ocean', 0, 0, 130-h)
-    spawn_model('car_wheel', 1.65, 0, 30-h+0.05, 0, 0, 0, 0)
+    #spawn_model('car_wheel', 1.65, 0, 30-h+0.05, 0, 0, 0, 0)
+    spawn_model('drink_carton', 1.61, 0.24, 30-h+0.2, 0, 0, 0, 0)
     rospy.sleep(1.)  # delay
     point_msg = rospy.wait_for_message("/camera/depth/points", PointCloud2)
-    #image = point_npy_callback(point_msg)
     image = point_callback(point_msg)
     cv2.imwrite(save_path + 'imgs/i.png', image)
-    '''
+    delete_model('drink_carton')
+    '''    
 
 if __name__ == '__main__':
     try:
